@@ -1,1 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TSRO Gas Station</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #e8f5e9;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #1b5e20;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-left h1 {
+      font-size: 1.8rem;
+      margin: 0;
+    }
+
+    .header-icons {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header-icons i {
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .machine-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .machine-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .machine-header h2 {
+      margin: 0;
+    }
+
+    .fuel-table {
+      margin-bottom: 30px;
+    }
+
+    .fuel-table h3 {
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    .add-transaction-form {
+      margin-top: 10px;
+    }
+
+    .add-transaction-form input[type="number"] {
+      width: 120px;
+      padding: 5px;
+      margin-right: 10px;
+    }
+
+    .add-transaction-form button {
+      padding: 6px 12px;
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .total-row {
+      font-weight: bold;
+      background-color: #f1f8e9;
+    }
+
+    .add-button {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .add-button button {
+      background-color: #388e3c;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <i class="fas fa-gas-pump"></i>
+      <h1>TSRO GAS STATION</h1>
+    </div>
+    <div class="header-icons">
+      <i class="fas fa-user-circle" title="Profile"></i>
+      <i class="fas fa-box" title="Products"></i>
+      <i class="fas fa-truck" title="Delivery History"></i>
+      <i class="fas fa-cash-register" title="Sales"></i>
+    </div>
+  </header>
+
+  <div class="container" id="machines-container">
+    <!-- Machines will be added here -->
+  </div>
+
+  <div class="add-button">
+    <button onclick="addMachine()"><i class="fas fa-plus"></i></button>
+  </div>
+
+  <script>
+    let machineCount = 0;
+    const fuelTypes = ["Diesel", "Unleaded", "Premium"];
+
+    function addMachine() {
+      machineCount++;
+      const container = document.getElementById("machines-container");
+
+      const section = document.createElement("div");
+      section.className = "machine-section";
+      section.id = `machine-${machineCount}`;
+
+      let html = `
+        <div class="machine-header">
+          <h2><i class="fas fa-gas-pump"></i> Machine ${machineCount}</h2>
+        </div>
+      `;
+
+      fuelTypes.forEach(fuel => {
+        const fuelId = fuel.toLowerCase();
+        html += `
+          <div class="fuel-table">
+            <h3>${fuel}</h3>
+            <form class="add-transaction-form" onsubmit="addTransaction(event, ${machineCount}, '${fuel}')">
+              <label>Price per Liter (₱):</label>
+              <input type="number" step="0.01" required id="price-${machineCount}-${fuel}" value="60" />
+              <label>Amount (₱):</label>
+              <input type="number" step="0.01" required id="amount-${machineCount}-${fuel}" />
+              <button type="submit">Add</button>
+            </form>
+            <table id="table-${machineCount}-${fuel}">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Amount (₱)</th>
+                  <th>Liters</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2">Total Amount:</td>
+                  <td id="total-amount-${machineCount}-${fuel}">₱0.00</td>
+                </tr>
+                <tr class="total-row">
+                  <td colspan="2">Total Liters:</td>
+                  <td id="total-liters-${machineCount}-${fuel}">0.00</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        `;
+      });
+
+      section.innerHTML = html;
+      container.appendChild(section);
+    }
+
+    function addTransaction(event, machineId, fuelType) {
+      event.preventDefault();
+      const amountInput = document.getElementById(`amount-${machineId}-${fuelType}`);
+      const priceInput = document.getElementById(`price-${machineId}-${fuelType}`);
+
+      const amount = parseFloat(amountInput.value);
+      const price = parseFloat(priceInput.value);
+
+      if (isNaN(amount) || amount <= 0 || isNaN(price) || price <= 0) return;
+
+      const liters = amount / price;
+      const tableBody = document.getElementById(`table-${machineId}-${fuelType}`).querySelector("tbody");
+      const rowCount = tableBody.rows.length + 1;
+
+      const row = tableBody.insertRow();
+      row.innerHTML = `
+        <td>${rowCount}</td>
+        <td>${amount.toFixed(2)}</td>
+        <td>${liters.toFixed(2)}</td>
+      `;
+
+      amountInput.value = "";
+      updateFuelTotals(machineId, fuelType);
+    }
+
+    function updateFuelTotals(machineId, fuelType) {
+      const tableBody = document.getElementById(`table-${machineId}-${fuelType}`).querySelector("tbody");
+      let totalAmount = 0;
+      let totalLiters = 0;
+
+      for (let row of tableBody.rows) {
+        const amount = parseFloat(row.cells[1].innerText);
+        const liters = parseFloat(row.cells[2].innerText);
+        if (!isNaN(amount)) totalAmount += amount;
+        if (!isNaN(liters)) totalLiters += liters;
+      }
+
+      document.getElementById(`total-amount-${machineId}-${fuelType}`).innerText = `₱${totalAmount.toFixed(2)}`;
+      document.getElementById(`total-liters-${machineId}-${fuelType}`).innerText = totalLiters.toFixed(2);
+    }
+
+    // Load the first machine on startup
+    window.onload = () => {
+      addMachine();
+    };
+  </script>
+</body>
+</html>
 
