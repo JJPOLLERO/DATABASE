@@ -92,6 +92,16 @@
       text-align: center;
     }
 
+    table th:nth-child(5),
+    table td:nth-child(5) {
+      width: 100px;
+    }
+
+    table th:nth-child(4),
+    table td:nth-child(4) {
+      width: 80px;
+    }
+
     .add-transaction-form {
       margin-top: 10px;
     }
@@ -130,6 +140,33 @@
       font-size: 1.5rem;
       cursor: pointer;
     }
+
+    .stock-input {
+      width: 100px;
+      padding: 5px;
+      margin-top: 10px;
+    }
+
+    .remove-button {
+      background-color: #d32f2f;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-radius: 5px;
+    }
+
+    .min-max-button, .add-fuel-type-button {
+      background-color: #388e3c;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -146,9 +183,7 @@
     </div>
   </header>
 
-  <div class="container" id="machines-container">
-    <!-- Machines will be added here -->
-  </div>
+  <div class="container" id="machines-container"></div>
 
   <div class="add-button">
     <button onclick="addMachine()"><i class="fas fa-plus"></i></button>
@@ -156,7 +191,7 @@
 
   <script>
     let machineCount = 0;
-    const fuelTypes = ["Diesel", "Unleaded", "Premium"];
+    let customFuelId = 0;
 
     function addMachine() {
       machineCount++;
@@ -166,98 +201,175 @@
       section.className = "machine-section";
       section.id = `machine-${machineCount}`;
 
-      let html = `
+      section.innerHTML = `
         <div class="machine-header">
           <h2><i class="fas fa-gas-pump"></i> Machine ${machineCount}</h2>
         </div>
+        <div id="fuel-types-container-${machineCount}"></div>
+        <button class="add-fuel-type-button" onclick="addFuelType(${machineCount})">Add Fuel Type</button>
       `;
 
-      fuelTypes.forEach(fuel => {
-        const fuelId = fuel.toLowerCase();
-        html += `
-          <div class="fuel-table">
-            <h3>${fuel}</h3>
-            <form class="add-transaction-form" onsubmit="addTransaction(event, ${machineCount}, '${fuel}')">
-              <label>Price per Liter (₱):</label>
-              <input type="number" step="0.01" required id="price-${machineCount}-${fuel}" value="60" />
-              <label>Amount (₱):</label>
-              <input type="number" step="0.01" required id="amount-${machineCount}-${fuel}" />
-              <button type="submit">Add</button>
-            </form>
-            <table id="table-${machineCount}-${fuel}">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Amount (₱)</th>
-                  <th>Liters</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-              <tfoot>
-                <tr class="total-row">
-                  <td colspan="2">Total Amount:</td>
-                  <td id="total-amount-${machineCount}-${fuel}">₱0.00</td>
-                </tr>
-                <tr class="total-row">
-                  <td colspan="2">Total Liters:</td>
-                  <td id="total-liters-${machineCount}-${fuel}">0.00</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        `;
-      });
-
-      section.innerHTML = html;
       container.appendChild(section);
+
+      // Add default fuel types
+      addFuelType(machineCount, "Unleaded", true);
+      addFuelType(machineCount, "Diesel", true);
     }
 
-    function addTransaction(event, machineId, fuelType) {
+    function addFuelType(machineId, fuelType = null, isDefault = false) {
+      if (!isDefault) {
+        fuelType = prompt("Enter fuel type name:");
+        if (!fuelType || fuelType.trim() === "") return;
+        fuelType = fuelType.trim();
+      }
+
+      const fuelTypesContainer = document.getElementById(`fuel-types-container-${machineId}`);
+      const safeFuelType = fuelType.replace(/\s+/g, "_"); // for use in IDs
+      customFuelId++;
+
+      const fuelDiv = document.createElement("div");
+      fuelDiv.className = "fuel-table";
+      fuelDiv.id = `fuel-type-${machineId}-${safeFuelType}-${customFuelId}`;
+
+      fuelDiv.innerHTML = `
+        <h3>${fuelType}</h3>
+        <button class="min-max-button" onclick="toggleTable(${machineId}, '${safeFuelType}-${customFuelId}')">Maximize</button>
+        <form class="add-transaction-form" onsubmit="addTransaction(event, ${machineId}, '${safeFuelType}-${customFuelId}')">
+          <label>Price per Liter (₱):</label>
+          <input type="number" step="0.01" required id="price-${machineId}-${safeFuelType}-${customFuelId}" value="60" />
+          <label>Amount (₱):</label>
+          <input type="number" step="0.01" required id="amount-${machineId}-${safeFuelType}-${customFuelId}" />
+          <button type="submit">Add</button>
+        </form>
+        <table id="table-${machineId}-${safeFuelType}-${customFuelId}" class="transaction-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Amount (₱)</th>
+              <th>Liters</th>
+              <th>Remove</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="2">Total Amount:</td>
+              <td id="total-amount-${machineId}-${safeFuelType}-${customFuelId}">₱0.00</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="2">Total Liters:</td>
+              <td id="total-liters-${machineId}-${safeFuelType}-${customFuelId}">0.00</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="2">Total Stock:</td>
+              <td>
+                <input type="number" class="stock-input" id="stock-${machineId}-${safeFuelType}-${customFuelId}" value="1000" onchange="updateStock(${machineId}, '${safeFuelType}-${customFuelId}')" />
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+
+      fuelTypesContainer.appendChild(fuelDiv);
+    }
+
+    function toggleTable(machineId, fuelKey) {
+      const table = document.getElementById(`table-${machineId}-${fuelKey}`);
+      const button = table.previousElementSibling.previousElementSibling;
+      const rows = table.querySelector("tbody").rows;
+
+      const isMaximized = button.innerText === 'Minimize';
+
+      if (isMaximized) {
+        enforceLastThreeRowsVisible(table);
+        button.innerText = 'Maximize';
+      } else {
+        for (let row of rows) row.style.display = '';
+        button.innerText = 'Minimize';
+      }
+    }
+
+    function enforceLastThreeRowsVisible(table) {
+      const rows = table.querySelector("tbody").rows;
+      for (let i = 0; i < rows.length; i++) {
+        rows[i].style.display = i >= rows.length - 3 ? '' : 'none';
+      }
+    }
+
+    function addTransaction(event, machineId, fuelKey) {
       event.preventDefault();
-      const amountInput = document.getElementById(`amount-${machineId}-${fuelType}`);
-      const priceInput = document.getElementById(`price-${machineId}-${fuelType}`);
+
+      const amountInput = document.getElementById(`amount-${machineId}-${fuelKey}`);
+      const priceInput = document.getElementById(`price-${machineId}-${fuelKey}`);
 
       const amount = parseFloat(amountInput.value);
       const price = parseFloat(priceInput.value);
 
       if (isNaN(amount) || amount <= 0 || isNaN(price) || price <= 0) return;
 
+      const table = document.getElementById(`table-${machineId}-${fuelKey}`);
+      const newRow = table.querySelector("tbody").insertRow();
       const liters = amount / price;
-      const tableBody = document.getElementById(`table-${machineId}-${fuelType}`).querySelector("tbody");
-      const rowCount = tableBody.rows.length + 1;
+      const date = new Date().toLocaleString();
 
-      const row = tableBody.insertRow();
-      row.innerHTML = `
-        <td>${rowCount}</td>
-        <td>${amount.toFixed(2)}</td>
+      newRow.innerHTML = `
+        <td>${table.rows.length}</td>
+        <td>₱${amount.toFixed(2)}</td>
         <td>${liters.toFixed(2)}</td>
+        <td><button class="remove-button" onclick="removeTransaction(event, ${machineId}, '${fuelKey}')">Remove</button></td>
+        <td>${date}</td>
       `;
 
-      amountInput.value = "";
-      updateFuelTotals(machineId, fuelType);
+      updateTotal(machineId, fuelKey);
+      enforceLastThreeRowsVisible(table);
+      updateStockAfterTransaction(machineId, fuelKey, liters);
+      amountInput.value = '';
     }
 
-    function updateFuelTotals(machineId, fuelType) {
-      const tableBody = document.getElementById(`table-${machineId}-${fuelType}`).querySelector("tbody");
-      let totalAmount = 0;
-      let totalLiters = 0;
+    function removeTransaction(event, machineId, fuelKey) {
+      const row = event.target.closest("tr");
+      const liters = parseFloat(row.cells[2].textContent);
+      row.remove();
+      const table = document.getElementById(`table-${machineId}-${fuelKey}`);
+      updateTotal(machineId, fuelKey);
+      enforceLastThreeRowsVisible(table);
+      updateStockAfterTransaction(machineId, fuelKey, -liters);
+      resetRowNumbers(table);
+    }
 
-      for (let row of tableBody.rows) {
-        const amount = parseFloat(row.cells[1].innerText);
-        const liters = parseFloat(row.cells[2].innerText);
-        if (!isNaN(amount)) totalAmount += amount;
-        if (!isNaN(liters)) totalLiters += liters;
+    function updateTotal(machineId, fuelKey) {
+      const table = document.getElementById(`table-${machineId}-${fuelKey}`);
+      const rows = table.querySelector("tbody").rows;
+
+      let totalAmount = 0, totalLiters = 0;
+
+      for (let row of rows) {
+        const amount = parseFloat(row.cells[1].textContent.replace('₱', ''));
+        const liters = parseFloat(row.cells[2].textContent);
+        totalAmount += amount;
+        totalLiters += liters;
       }
 
-      document.getElementById(`total-amount-${machineId}-${fuelType}`).innerText = `₱${totalAmount.toFixed(2)}`;
-      document.getElementById(`total-liters-${machineId}-${fuelType}`).innerText = totalLiters.toFixed(2);
+      document.getElementById(`total-amount-${machineId}-${fuelKey}`).textContent = `₱${totalAmount.toFixed(2)}`;
+      document.getElementById(`total-liters-${machineId}-${fuelKey}`).textContent = totalLiters.toFixed(2);
     }
 
-    // Load the first machine on startup
-    window.onload = () => {
-      addMachine();
-    };
+    function resetRowNumbers(table) {
+      const rows = table.querySelector("tbody").rows;
+      for (let i = 0; i < rows.length; i++) {
+        rows[i].cells[0].textContent = i + 1;
+      }
+    }
+
+    function updateStockAfterTransaction(machineId, fuelKey, litersChange) {
+      const stockInput = document.getElementById(`stock-${machineId}-${fuelKey}`);
+      let stock = parseFloat(stockInput.value);
+      if (!isNaN(stock)) {
+        stock -= litersChange;
+        stockInput.value = stock.toFixed(2);
+      }
+    }
   </script>
 </body>
 </html>
-
