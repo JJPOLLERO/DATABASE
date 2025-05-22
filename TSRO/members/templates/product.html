@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TSRO Gas Station</title>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e8f5e9;
+      margin: 0;
+      padding: 0;
+      overflow-y: auto;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      background-color: #1b5e20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      flex-wrap: wrap;
+      z-index: 1000;
+    }
+
+    .site-title a {
+      text-decoration: none;
+      color: white;
+    }
+
+    .site-title h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .site-title p {
+      margin: 5px 0 0;
+      font-size: 0.9rem;
+      color: #e0e0e0;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 20px;
+      padding: 0;
+      margin: 0;
+    }
+
+    nav li a {
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+
+    nav li a.fuel { color: #ffcdd2; }
+    nav li a.products { color: #fff9c4; }
+    nav li a.home { color: #e3f2fd; }
+
+    nav li a.activelink {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    nav li a i {
+      margin-right: 8px;
+    }
+
+    .signout-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+      text-decoration: none;
+    }
+
+    .signout-btn:hover {
+      background-color: #c82333;
+    }
+
+    .signout-btn i {
+      margin-right: 4px;
+    }
+
+    .container {
+      padding: 20px;
+    }
+    .product-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .product-section h2 {
+      margin-top: 0;
+    }
+    .add-product-form input {
+      padding: 6px;
+      margin-right: 10px;
+      font-size: 1rem;
+      width: 100px;
+    }
+    .add-product-form label {
+      font-size: 0.9rem;
+      margin-right: 5px;
+    }
+    .add-product-form button {
+      padding: 6px 12px;
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    .total-row {
+      font-weight: bold;
+      background-color: #f1f8e9;
+    }
+    .remove-button {
+      background-color: #d32f2f;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="site-title">
+      <a href="">
+        <h1>TSRO Gas Station</h1>
+      </a>
+      <p>Automated fuel sale tracking and inventory system</p>
+    </div>
+
+    <ul>
+      <li><a href="{% url 'webpage2' %}" class="home"><i class="fas fa-home"></i> Home</a></li>
+      <li><a href="{% url 'webpage3' %}" class="fuel"><i class="fas fa-gas-pump"></i> Fuel</a></li>
+      <li><a href="{% url 'webpage5' %}" class="activelink products"><i class="fas fa-box"></i> Products</a></li>
+      <li><a href="{% url 'webpage6' %}" class="sales"><i class="fas fa-chart-line"></i> Sales</a></li>
+      <li><a href="{% url 'webpage4' %}" class="history"><i class="fas fa-truck"></i> Delivery History</a></li>
+    </ul>
+
+    <a href="{% url 'webpage1' %}" class="signout-btn">
+      <i class="fas fa-sign-out-alt"></i> Sign Out
+    </a>
+  </nav>
+
+  <div class="container">
+    <div class="product-section">
+      <h2><i class="fas fa-box"></i> Product Transactions</h2>
+      <form class="add-product-form" onsubmit="addProductTransaction(event)">
+        <input type="text" id="product-name" placeholder="Product Name" required />
+        <input type="number" id="product-qty" placeholder="Quantity" step="1" min="1" required />
+        
+        <label for="volume-liters">Liters:</label>
+        <input type="number" id="volume-liters" placeholder="0" min="0" step="1" value="0" />
+        
+        <label for="volume-milliliters">Milliliters:</label>
+        <input type="number" id="volume-milliliters" placeholder="0" min="0" max="999" step="1" value="0" />
+        
+        <input type="number" id="product-price" placeholder="Price (₱)" step="0.01" min="0.01" required />
+        <button type="submit">Add</button>
+      </form>
+
+      <table id="product-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Volume (L)</th>
+            <th>Price per Unit (₱)</th>
+            <th>Total (₱)</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="2">Total Quantity:</td>
+            <td id="total-qty">0</td>
+            <td colspan="1">—</td>
+            <td>Total Amount:</td>
+            <td id="total-amount">₱0.00</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function addProductTransaction(event) {
+      event.preventDefault();
+
+      const nameInput = document.getElementById("product-name");
+      const qtyInput = document.getElementById("product-qty");
+      const litersInput = document.getElementById("volume-liters");
+      const millilitersInput = document.getElementById("volume-milliliters");
+      const priceInput = document.getElementById("product-price");
+
+      const name = nameInput.value.trim();
+      const quantity = parseInt(qtyInput.value);
+      const liters = parseInt(litersInput.value);
+      const milliliters = parseInt(millilitersInput.value);
+      const price = parseFloat(priceInput.value);
+
+      // Validation: At least one volume value > 0
+      if (!name || isNaN(quantity) || quantity <= 0 || isNaN(liters) || liters < 0 || isNaN(milliliters) || milliliters < 0 || milliliters > 999 || isNaN(price) || price <= 0) {
+        alert("Please enter valid values. Milliliters must be between 0 and 999.");
+        return;
+      }
+      if (liters === 0 && milliliters === 0) {
+        alert("Please enter a volume in either liters or milliliters.");
+        return;
+      }
+
+      const volumeLitersDecimal = liters + milliliters / 1000;
+      const total = quantity * price;
+
+      const tableBody = document.querySelector("#product-table tbody");
+      const rowCount = tableBody.rows.length + 1;
+
+      const row = tableBody.insertRow();
+      row.innerHTML = `
+        <td>${rowCount}</td>
+        <td>${name}</td>
+        <td>${quantity}</td>
+        <td>${volumeLitersDecimal.toFixed(3)}</td>
+        <td>${price.toFixed(2)}</td>
+        <td>${total.toFixed(2)}</td>
+        <td><button class="remove-button" onclick="removeRow(event)">Remove</button></td>
+      `;
+
+      nameInput.value = "";
+      qtyInput.value = "";
+      litersInput.value = "0";
+      millilitersInput.value = "0";
+      priceInput.value = "";
+
+      updateProductTotals();
+    }
+
+    function removeRow(event) {
+      const row = event.target.closest('tr');
+      row.remove();
+      updateProductTotals();
+    }
+
+    function updateProductTotals() {
+      const tableBody = document.querySelector("#product-table tbody");
+      let totalQty = 0;
+      let totalAmount = 0;
+      for (let row of tableBody.rows) {
+        const qty = parseInt(row.cells[2].innerText);
+        const total = parseFloat(row.cells[5].innerText);
+        if (!isNaN(qty)) totalQty += qty;
+        if (!isNaN(total)) totalAmount += total;
+      }
+      document.getElementById("total-qty").innerText = totalQty;
+      document.getElementById("total-amount").innerText = `₱${totalAmount.toFixed(2)}`;
+    }
+  </script>
+</body>
+</html>
